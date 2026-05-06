@@ -33,7 +33,8 @@ Interaction: Input Projection (768→128) → DCN v2 Cross (3 layers) + Deep MLP
 GDRNet/
 ├── src/
 │   ├── models/
-│   │   └── gdr.py          # V11 model architecture
+│   │   └── gdr.py          # model architecture
+│   │   └── baseline.py          # model architecture
 │   ├── train.py            # GDSC training with multi-GPU
 │   ├── finetune_organoid.py    # LOOCV fine-tuning on organoid data
 │   ├── ablation_organoid.py    # Ablation study

@@ -16,6 +16,7 @@ Cell Branch: Gene Expr (2000-d) + scF Emb (3072-d) + Cell ID (64-d) → 384-d
 Drug Branch: Morgan FP (2048-bit) + RDKit Desc (188-d) + Drug ID (64-d) → 384-d
 Interaction: Input Projection (768→128) → DCN v2 Cross (3 layers) + Deep MLP (3 layers) → Output (IC50)
 ```
+![Framework](images/flowchart.jpg)
 
 ## Performance
 

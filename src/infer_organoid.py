@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-GDRNetV11 Organoid Inference
+GDRNet Organoid Inference
 =============================
-Run trained V11 ensemble on organoid drug response data.
+Run trained ensemble on organoid drug response data.
 
 Handles:
   - No raw gene expression for organoids → use zeros, rely on scF embeddings
@@ -55,7 +55,7 @@ def compute_metrics(y_true, y_pred, name=""):
 
 
 def load_organoid_data():
-    """Load organoid data and prepare inputs for V11 model."""
+    """Load organoid data and prepare inputs for model."""
     print("=" * 65, flush=True)
     print("  Loading organoid data", flush=True)
     print("=" * 65, flush=True)
@@ -144,24 +144,24 @@ def load_organoid_data():
 
 
 def infer_ensemble(device="cuda:0"):
-    """Run V11 ensemble inference on organoid data."""
+    """Run  ensemble inference on organoid data."""
     (x_gene, scf_emb, x_fp, x_desc, cell_idx, drug_idx, y_true,
      meta, n_genes, scf_dim, fp_bits, n_desc, n_cells, n_drugs) = load_organoid_data()
 
-    from models.gdr_v11 import GDRNetV11
+    from models.gdr import GDRNet
 
     # ── Load each model ──
     seeds = [42, 123, 456]
     all_preds = []
 
     for seed in seeds:
-        ckpt_path = MODELS / f"gdr_v11_s{seed}.pt"
+        ckpt_path = MODELS / f"gdr_s{seed}.pt"
         if not ckpt_path.exists():
             print(f"  WARNING: {ckpt_path} not found, skipping", flush=True)
             continue
 
         print(f"\n  Loading model seed={seed} ...", flush=True)
-        model = GDRNetV11(
+        model = GDRNet(
             n_genes=n_genes, scf_dim=scf_dim, fp_bits=fp_bits, n_desc=n_desc,
             n_cells=n_cells, n_drugs=n_drugs,
             d_hidden=256, id_emb_dim=64,
@@ -192,7 +192,7 @@ def infer_ensemble(device="cuda:0"):
                 preds.extend(out.cpu().numpy())
             preds = np.array(preds, dtype=np.float32)
             all_preds.append(preds)
-            compute_metrics(y_true, preds, f"V11-s{seed}")
+            compute_metrics(y_true, preds, f"V-s{seed}")
 
     if not all_preds:
         print("  ERROR: No models loaded!", flush=True)
@@ -203,7 +203,7 @@ def infer_ensemble(device="cuda:0"):
     print(f"\n  {'='*60}", flush=True)
     print(f"  Ensemble ({len(all_preds)} models)", flush=True)
     print(f"  {'='*60}", flush=True)
-    ens_metrics = compute_metrics(y_true, ens_preds, "V11-Ensemble")
+    ens_metrics = compute_metrics(y_true, ens_preds, "Ensemble")
 
     # ── Per-organoid metrics ──
     print(f"\n  Per-organoid performance:", flush=True)
@@ -247,7 +247,7 @@ def infer_ensemble(device="cuda:0"):
     result_df["predicted_ic50"] = ens_preds
     result_df["error"] = ens_preds - y_true
     result_df.to_csv(TABLES / "organoid_predictions.csv", index=False)
-    np.save(TABLES / "organoid_v11_ens_preds.npy", ens_preds)
+    np.save(TABLES / "organoid_ens_preds.npy", ens_preds)
 
     # ── Summary ──
     avg_per_org = np.mean([r["Pearson"] for r in per_org if np.isfinite(r["Pearson"])])

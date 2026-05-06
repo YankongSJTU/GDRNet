@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-GDRNetV11 Ablation Study (Organoid LOOCV)
+GDRNet Ablation Study (Organoid LOOCV)
 ==========================================
 Test contribution of each component by zeroing it out:
 
@@ -41,12 +41,12 @@ try:
 except (AttributeError, io.UnsupportedOperation):
     pass
 
-from models.gdr_v11 import GDRNetV11
+from models.gdr import GDRNet
 
 
 # ── Ablation Model Variants ───────────────────────────────────────────────────
 
-class AblationNoID(GDRNetV11):
+class AblationNoID(GDRNet):
     """w/o Cell/Drug ID Embeddings."""
     def forward(self, x_gene, scf, x_fp, x_desc, cell_idx, drug_idx):
         h_gene = self.gene_enc(x_gene)
@@ -69,7 +69,7 @@ class AblationNoID(GDRNetV11):
         return self.head(torch.cat([xc, xd], dim=-1)).squeeze(-1)
 
 
-class AblationNoCross(GDRNetV11):
+class AblationNoCross(GDRNet):
     """w/o DCN v2 Cross Network."""
     def forward(self, x_gene, scf, x_fp, x_desc, cell_idx, drug_idx):
         h_gene = self.gene_enc(x_gene)
@@ -91,7 +91,7 @@ class AblationNoCross(GDRNetV11):
         return self.head(torch.cat([x0, xd], dim=-1)).squeeze(-1)
 
 
-class AblationNoDeep(GDRNetV11):
+class AblationNoDeep(GDRNet):
     """w/o Deep MLP Network."""
     def forward(self, x_gene, scf, x_fp, x_desc, cell_idx, drug_idx):
         h_gene = self.gene_enc(x_gene)
@@ -113,7 +113,7 @@ class AblationNoDeep(GDRNetV11):
         return self.head(torch.cat([xc, xd], dim=-1)).squeeze(-1)
 
 
-class AblationNoScF(GDRNetV11):
+class AblationNoScF(GDRNet):
     """w/o scFoundation Embeddings."""
     def forward(self, x_gene, scf, x_fp, x_desc, cell_idx, drug_idx):
         h_gene = self.gene_enc(x_gene)
@@ -136,7 +136,7 @@ class AblationNoScF(GDRNetV11):
         return self.head(torch.cat([xc, xd], dim=-1)).squeeze(-1)
 
 
-class AblationNoDesc(GDRNetV11):
+class AblationNoDesc(GDRNet):
     """w/o RDKit Descriptors."""
     def forward(self, x_gene, scf, x_fp, x_desc, cell_idx, drug_idx):
         h_gene = self.gene_enc(x_gene)
@@ -237,7 +237,7 @@ def build_model(model_cls, n_cells, n_drugs, seed, device):
         d_hidden=256, id_emb_dim=64, n_cross=3, cross_rank=64,
         n_deep=3, dropout=0.15,
     )
-    ckpt = MODELS / f"gdr_v11_s{seed}.pt"
+    ckpt = MODELS / f"gdr_s{seed}.pt"
     state = torch.load(ckpt, map_location="cpu", weights_only=True)
     cleaned = {k.replace("module.", ""): v for k, v in state.items()}
     model.load_state_dict(cleaned, strict=False)
@@ -349,7 +349,7 @@ def main():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
     print("=" * 65, flush=True)
-    print("  GDRNetV11 Ablation Study (Organoid LOOCV)", flush=True)
+    print("  GDRNet Ablation Study (Organoid LOOCV)", flush=True)
     print("  6 variants × 16 folds × 1 seed (s42)", flush=True)
     print("=" * 65, flush=True)
 
@@ -359,7 +359,7 @@ def main():
 
     # Ablation variants
     ABLATIONS = [
-        ("Full Model",        GDRNetV11),
+        ("Full Model", GDRNet),
         ("w/o ID Embeddings", AblationNoID),
         ("w/o Cross Network", AblationNoCross),
         ("w/o Deep Network",  AblationNoDeep),

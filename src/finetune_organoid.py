@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-GDRNetV11 Organoid Fine-Tuning (LOOCV)
+GDRNet Organoid Fine-Tuning (LOOCV)
 ========================================
 Leave-One-Organoid-Out Cross-Validation fine-tuning on organoid data.
 
@@ -119,16 +119,16 @@ def load_organoid_data():
 # ── Build model with frozen encoders ──────────────────────────────────────────
 
 def build_model(n_cells, n_drugs, seed, device):
-    from models.gdr_v11 import GDRNetV11
+    from models.gdr import GDRNet
 
-    model = GDRNetV11(
+    model = GDRNet(
         n_genes=2000, scf_dim=3072, fp_bits=2048, n_desc=188,
         n_cells=n_cells, n_drugs=n_drugs,
         d_hidden=256, id_emb_dim=64,
         n_cross=3, cross_rank=64, n_deep=3, dropout=0.15,
     )
 
-    ckpt = MODELS / f"gdr_v11_s{seed}.pt"
+    ckpt = MODELS / f"gdr_s{seed}.pt"
     state = torch.load(ckpt, map_location="cpu", weights_only=True)
     cleaned = {k.replace("module.", ""): v for k, v in state.items()}
     model.load_state_dict(cleaned)
@@ -275,7 +275,7 @@ def main():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
     print("=" * 65, flush=True)
-    print("  GDRNetV11 Organoid Fine-Tuning (LOOCV)", flush=True)
+    print("  GDRNet Organoid Fine-Tuning (LOOCV)", flush=True)
     print("  Freeze encoders, fine-tune interaction+head", flush=True)
     print("  16-fold Leave-One-Organoid-Out", flush=True)
     print("=" * 65, flush=True)
@@ -288,14 +288,14 @@ def main():
 
     # ── 1. Pre-trained direct inference (baseline) ──
     print("\n  [1/3] Pre-trained direct inference ...", flush=True)
-    from models.gdr_v11 import GDRNetV11
+    from models.gdr import GDRNet
     all_preds_direct = np.zeros_like(y_true)
     for seed in [42, 123, 456]:
-        model = GDRNetV11(n_genes=2000, scf_dim=3072, fp_bits=2048, n_desc=188,
+        model = GDRNet(n_genes=2000, scf_dim=3072, fp_bits=2048, n_desc=188,
                            n_cells=n_cells, n_drugs=n_drugs,
                            d_hidden=256, id_emb_dim=64, n_cross=3, cross_rank=64,
                            n_deep=3, dropout=0.15)
-        ckpt = MODELS / f"gdr_v11_s{seed}.pt"
+        ckpt = MODELS / f"gdr_s{seed}.pt"
         state = torch.load(ckpt, map_location="cpu", weights_only=True)
         cleaned = {k.replace("module.", ""): v for k, v in state.items()}
         model.load_state_dict(cleaned)

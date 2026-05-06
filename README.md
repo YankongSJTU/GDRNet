@@ -40,6 +40,9 @@ GDRNet/
 │   ├── ablation_organoid.py    # Ablation study
 │   ├── infer_organoid.py       # Direct inference on organoid data
 │   └── generate_paper_figures.py  # Paper figure generation
+│   ├── demo/
+│   │   └── generate_demo_data.py          # model architecture
+│   │   └── run_demo.py          # model architecture
 ├── README.md
 ├── requirements.txt
 ├── .gitignore

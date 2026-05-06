@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-GDRNetV11 Training Script — CrossNet-Deep Ensemble
+GDRNet Training Script — CrossNet-Deep Ensemble
 ====================================================
 Fundamental departure from V3-V10:
   - DCN v2 explicit feature crossing instead of attention
@@ -34,7 +34,7 @@ from scipy.optimize import minimize_scalar
 
 warnings.filterwarnings("ignore")
 
-ROOT = Path("/export/home/kongyan/project/Organoid")
+ROOT = Path("./Organoid")
 PROC_DIR = ROOT / "data/processed"
 EXT_DIR = ROOT / "data/external"
 MODELS_DIR = ROOT / "models"
@@ -146,7 +146,7 @@ def load_dataset():
     from rdkit.Chem import AllChem, rdMolDescriptors
 
     print("=" * 65)
-    print("  Loading dataset for GDRNetV11 (CrossNet-Deep Ensemble)")
+    print("  Loading dataset for GDRNet (CrossNet-Deep Ensemble)")
     print("=" * 65)
     t0 = time.time()
 
@@ -300,7 +300,7 @@ def set_seed(seed):
 def main():
     t0 = time.time()
     print("=" * 65)
-    print("  GDRNetV11 Training  (CrossNet-Deep Ensemble)")
+    print("  GDRNet Training  (CrossNet-Deep Ensemble)")
     print("  DCN v2 + ID Embeddings + Simple MLP + 3-Model Ensemble")
     print("=" * 65)
 
@@ -325,7 +325,7 @@ def main():
             np.concatenate([data["x_fp_val"], data["x_desc_val"]], axis=1),
             data["y_val"],
             label="LightGBM(scF+FP+desc)")
-        np.save(TABLES / "lgbm_v11_val_preds.npy", lgbm_preds)
+        np.save(TABLES / "lgbm_val_preds.npy", lgbm_preds)
         results["LightGBM"] = compute_metrics(data["y_val"], lgbm_preds, "LightGBM")
 
         # LightGBM with gene + scF + FP + desc (richer)
@@ -337,7 +337,7 @@ def main():
             np.concatenate([data["x_fp_val"], data["x_desc_val"]], axis=1),
             data["y_val"],
             label="LightGBM(gene+scF+FP+desc)")
-        np.save(TABLES / "lgbm_v11_full_val_preds.npy", lgbm2_preds)
+        np.save(TABLES / "lgbm_full_val_preds.npy", lgbm2_preds)
         results["LightGBM-full"] = compute_metrics(
             data["y_val"], lgbm2_preds, "LightGBM-full")
 
@@ -351,8 +351,8 @@ def main():
             p = np.load(cache)
             results[name] = compute_metrics(data["y_val"], p, f"{name} (cached)")
 
-    # ── GDRNetV11 Ensemble ──
-    from models.gdr_v11 import GDRNetV11, V11Dataset, train_v11
+    # ── GDRNet Ensemble ──
+    from models.gdr import GDRNet, Dataset, train
 
     seeds = [42, 123, 456, 789, 2024][:args.n_models]
     ensemble_preds = []
@@ -365,7 +365,7 @@ def main():
 
         set_seed(seed)
 
-        model = GDRNetV11(
+        model = GDRNet(
             n_genes=data["x_gene_tr"].shape[1],
             scf_dim=data["scf_dim"],
             fp_bits=data["x_fp_tr"].shape[1],
@@ -383,19 +383,19 @@ def main():
         if n_gpus > 1:
             model = nn.DataParallel(model, device_ids=gpu_ids)
 
-        tr_ds = V11Dataset(
+        tr_ds = Dataset(
             data["x_gene_tr"], data["x_scf_tr"],
             data["x_fp_tr"], data["x_desc_tr"],
             data["cell_idx_tr"], data["drug_idx_tr"],
             data["y_tr"])
-        val_ds = V11Dataset(
+        val_ds = Dataset(
             data["x_gene_val"], data["x_scf_val"],
             data["x_fp_val"], data["x_desc_val"],
             data["cell_idx_val"], data["drug_idx_val"],
             data["y_val"])
 
-        tag = f"gdr_v11_s{seed}"
-        _, metrics, hist, val_preds = train_v11(
+        tag = f"gdr_s{seed}"
+        _, metrics, hist, val_preds = train(
             model, tr_ds, val_ds,
             model_name=tag,
             n_epochs=args.epochs,
@@ -406,8 +406,8 @@ def main():
             warmup_frac=0.05,
             device=primary_gpu,
         )
-        hist.to_csv(TABLES / f"gdr_v11_s{seed}_history.csv", index=False)
-        np.save(TABLES / f"gdr_v11_s{seed}_val_preds.npy", val_preds)
+        hist.to_csv(TABLES / f"gdr_s{seed}_history.csv", index=False)
+        np.save(TABLES / f"gdr_s{seed}_val_preds.npy", val_preds)
 
         ensemble_preds.append(val_preds)
         ensemble_metrics.append(metrics)
@@ -418,43 +418,43 @@ def main():
 
     # ── Ensemble: average predictions ──
     ens_preds = np.mean(ensemble_preds, axis=0)
-    np.save(TABLES / "gdr_v11_ensemble_val_preds.npy", ens_preds)
-    results["V11-Ensemble"] = compute_metrics(
-        data["y_val"], ens_preds, "V11-Ensemble")
+    np.save(TABLES / "gdr_ensemble_val_preds.npy", ens_preds)
+    results["Ensemble"] = compute_metrics(
+        data["y_val"], ens_preds, "Ensemble")
 
     # ── Blends ──
-    for label, pred_arr in [("LightGBM", "lgbm_v11_val_preds.npy"),
-                            ("LightGBM-full", "lgbm_v11_full_val_preds.npy"),
+    for label, pred_arr in [("LightGBM", "lgbm_val_preds.npy"),
+                            ("LightGBM-full", "lgbm_full_val_preds.npy"),
                             ("V3", "gdr_v3_val_preds.npy"),
                             ("V10", "gdr_v10_val_preds.npy")]:
         cache = TABLES / pred_arr
         if cache.exists():
             p = np.load(cache)
             mixed, alpha = blend(data["y_val"], ens_preds, p)
-            key = f"V11-Ens+{label}(a={alpha:.2f})"
+            key = f"Ens+{label}(a={alpha:.2f})"
             results[key] = compute_metrics(data["y_val"], mixed, key)
 
     # ── Summary ──
     cmp = pd.DataFrame(results).T.sort_values("Pearson", ascending=False)
-    cmp.to_csv(TABLES / "model_comparison_v11.csv")
+    cmp.to_csv(TABLES / "model_comparison.csv")
 
     elapsed = time.time() - t0
     print(f"\n{'='*65}")
     print("  Final Comparison:")
     print(cmp.to_string())
-    print(f"\n  Saved -> {TABLES}/model_comparison_v11.csv")
+    print(f"\n  Saved -> {TABLES}/model_comparison.csv")
     print(f"  Total time: {elapsed/60:.1f} min")
     print(f"{'='*65}")
 
-    # V11 vs baselines
-    v11_p = results["V11-Ensemble"]["Pearson"]
+    #  vs baselines
+    p = results["Ensemble"]["Pearson"]
     for bl in ["LightGBM", "LightGBM-full", "GDRNetV3", "GDRNetV10"]:
         if bl in results:
             bp = results[bl]["Pearson"]
-            diff = v11_p - bp
+            diff = p - bp
             symbol = "+" if diff > 0 else ""
             status = "PASS" if diff > 0 else "NEEDS WORK"
-            print(f"  V11-Ensemble vs {bl}: {v11_p:.4f} vs {bp:.4f}  "
+            print(f"  Ensemble vs {bl}: {p:.4f} vs {bp:.4f}  "
                   f"({symbol}{diff:.4f})  {status}")
 
 

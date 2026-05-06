@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-GDRNetV11 Paper Figures and Tables Generator
+GDRNet Paper Figures and Tables Generator
 =============================================
 Generate all figures and formatted tables for Briefings in Bioinformatics paper.
 
@@ -77,7 +77,7 @@ def save_data(df, name):
 # ── Figure 1: Model Architecture ──────────────────────────────────────────────
 
 def fig1_architecture():
-    """Generate V11 architecture diagram (reference for hand-drawing)."""
+    """Generate architecture diagram (reference for hand-drawing)."""
     print("\n[Fig 1] Model Architecture ...")
 
     fig, ax = plt.subplots(figsize=(14, 10))
@@ -99,7 +99,7 @@ def fig1_architecture():
                     arrowprops=dict(arrowstyle="->", color="black", lw=1.5))
 
     # Title
-    ax.text(7, 9.5, "GDRNetV11 Architecture", ha="center", fontsize=16, fontweight="bold")
+    ax.text(7, 9.5, "GDRNet Architecture", ha="center", fontsize=16, fontweight="bold")
 
     # Cell branch (left side)
     ax.text(3, 8.8, "Cell Representation", ha="center", fontsize=12, fontweight="bold", color=COLORS["cell"])
@@ -185,7 +185,7 @@ def fig1_architecture():
     save_figure(fig, "fig1_architecture")
     # Save architecture description as text
     with open(FIGURES / "fig1_architecture_description.txt", "w") as f:
-        f.write("GDRNetV11 Architecture\n")
+        f.write("GDRNet Architecture\n")
         f.write("=" * 50 + "\n\n")
         f.write("Cell Branch:\n")
         f.write("  - Gene Expression: 2000-dim → Gene Encoder (MLP) → 128-dim\n")
@@ -214,7 +214,7 @@ def fig2_gdsc_comparison():
     """Grouped bar chart for GDSC performance."""
     print("\n[Fig 2] GDSC Performance Comparison ...")
 
-    df = pd.read_csv(TABLES / "model_comparison_v11.csv", index_col=0)
+    df = pd.read_csv(TABLES / "model_comparison.csv", index_col=0)
 
     # Select models to show
     models = ["V11-Ensemble", "V11-s42", "V11-s123", "V11-s456", "LightGBM",
@@ -365,7 +365,7 @@ def fig6_scatter_plots():
     print("\n[Fig 6] Scatter Plots ...")
 
     # Load GDSC predictions and targets
-    gdsc_preds = np.load(TABLES / "gdr_v11_ensemble_val_preds.npy")
+    gdsc_preds = np.load(TABLES / "gdr_ensemble_val_preds.npy")
     gdsc_targets = np.load(TABLES / "gdsc_val_targets.npy")
 
     # Load organoid predictions
@@ -382,7 +382,7 @@ def fig6_scatter_plots():
             [gdsc_targets.min(), gdsc_targets.max()], 'r--', lw=2)
     ax.set_xlabel("True IC50", fontsize=12)
     ax.set_ylabel("Predicted IC50", fontsize=12)
-    ax.set_title("GDSC Test Set (V11-Ensemble)", fontsize=14, fontweight="bold")
+    ax.set_title("GDSC Test Set (Ensemble)", fontsize=14, fontweight="bold")
 
     # Calculate Pearson for display
     p_gdsc = np.corrcoef(gdsc_targets, gdsc_preds)[0, 1]
@@ -416,14 +416,14 @@ def fig6_scatter_plots():
 # ── Figure S1: Training Curves ────────────────────────────────────────────────
 
 def figs1_training_curves():
-    """Training curves for V11 models."""
+    """Training curves for models."""
     print("\n[Fig S1] Training Curves ...")
 
     seeds = [42, 123, 456]
     fig, axes = plt.subplots(2, 3, figsize=(14, 8))
 
     for i, seed in enumerate(seeds):
-        history = pd.read_csv(TABLES / f"gdr_v11_s{seed}_history.csv")
+        history = pd.read_csv(TABLES / f"gdr_s{seed}_history.csv")
 
         # Loss curve
         ax = axes[0, i]
@@ -447,7 +447,7 @@ def figs1_training_curves():
     # Combine histories
     all_histories = []
     for seed in seeds:
-        h = pd.read_csv(TABLES / f"gdr_v11_s{seed}_history.csv")
+        h = pd.read_csv(TABLES / f"gdr_s{seed}_history.csv")
         h["seed"] = seed
         all_histories.append(h)
     combined = pd.concat(all_histories, ignore_index=True)
@@ -564,7 +564,7 @@ def generate_tables():
     print("  Saved: table1_dataset_stats.csv")
 
     # Table 2: GDSC Comparison
-    df = pd.read_csv(TABLES / "model_comparison_v11.csv", index_col=0)
+    df = pd.read_csv(TABLES / "model_comparison.csv", index_col=0)
     models = ["V11-Ensemble", "V11-s42", "V11-s123", "V11-s456", "LightGBM",
               "GDRNetV3", "GDRNetV10", "GDRNetV8"]
     table2 = df.loc[df.index.isin(models)].reindex([m for m in models if m in df.index])
@@ -591,7 +591,7 @@ def generate_tables():
 
 def main():
     print("=" * 65)
-    print("  GDRNetV11 Paper Figures and Tables Generator")
+    print("  GDRNet Paper Figures and Tables Generator")
     print("=" * 65)
 
     # Create output directory

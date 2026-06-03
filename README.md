@@ -58,12 +58,6 @@ GDRNet/
 │   ├── prepare_organoid_data.py            # CRC organoid data preparation
 │   ├── prepare_multicancer_data.py         # Multi-cancer organoid data preparation
 │   ├── resolve_pdac_smiles.py              # PDAC drug SMILES resolution (PubChem API)
-│   ├── generate_paper_figures_enhanced.py  # Paper figure generation
-│   ├── generate_multicancer_figures.py     # Multi-cancer comparison figures
-│   └── generate_interp_figures.py          # Interpretability figures (SHAP)
-├── results/
-│   ├── figures/paper/                      # Publication figures (PDF + PNG)
-│   └── tables/                             # Result tables (CSV)
 ├── README.md
 ├── requirements.txt
 ├── .gitignore

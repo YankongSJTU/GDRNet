@@ -1,4 +1,4 @@
-# GDRNet: Graph-Drug Response Network for Drug Sensitivity Prediction
+# GDRNet: GDRNet: A Deep Cross-Network with Multi-Modal Feature Integration for Predicting Drug Sensitivity in Patient-Derived Organoids
 
 GDRNet is a deep learning model for predicting drug sensitivity (IC50) in cancer cell lines and patient-derived organoids.
 

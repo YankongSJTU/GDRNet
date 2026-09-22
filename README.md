@@ -2,7 +2,7 @@
 
 GDRNet is a deep learning framework for predicting drug sensitivity (IC50) in cancer cell lines and patient-derived organoids (PDOs). It uses a DCN v2 cross network with multi-modal feature integration to achieve state-of-the-art performance. The model is pre-trained on the GDSC cell line benchmark and transferred to patient-derived organoids via a frozen-encoder fine-tuning strategy, demonstrating robust cross-cancer generalizability.
 <div>
- <img src="data/workflow.jpg"   width="80%">
+ <img src="data/workflow.jpg"   width="100%">
 </div>
 ## Key Features
 
